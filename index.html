@@ -75,11 +75,11 @@
 
   <script>
     const TOTAL_SEATS = 28;
-    const seatStates = Array(TOTAL_SEATS).fill(null);
+    const seatStates = Array(TOTAL_SEATS).fill(null); // 좌석 상태 저장 (X 또는 null)
 
     function shuffle(array) {
-      for (let i = array.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
+      for (let i = array.length -1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i +1));
         [array[i], array[j]] = [array[j], array[i]];
       }
     }
@@ -117,8 +117,8 @@
       const excludeRaw = document.getElementById("excludeNums").value;
       const exclude = excludeRaw
         .split(",")
-        .map((s) => parseInt(s.trim()))
-        .filter((n) => !isNaN(n));
+        .map(s => parseInt(s.trim()))
+        .filter(n => !isNaN(n));
 
       const left = document.getElementById("leftSection");
       const center = document.getElementById("centerSection");
@@ -133,38 +133,42 @@
         return;
       }
 
-      // 1) 번호 배열 생성
-      let allNumbers = [];
+      // 1. 시작~끝 번호 모두 배열 생성
+      let numbers = [];
       for (let i = start; i <= end; i++) {
-        allNumbers.push(i);
+        numbers.push(i);
       }
 
-      // 2) 1차 셔플
-      shuffle(allNumbers);
+      // 2. 제외할 번호는 배열에서 제거
+      const filteredNumbers = numbers.filter(n => !exclude.includes(n));
 
-      // 3) 제외번호 빈칸처리
-      let processed = allNumbers.map((n) => (exclude.includes(n) ? "" : n));
+      // 3. 제외된 개수만큼 빈칸 생성
+      const blanksCount = numbers.length - filteredNumbers.length;
+      const blanks = Array(blanksCount).fill("");
 
-      // 4) 2차 셔플 (빈칸과 숫자가 골고루 섞이도록)
-      shuffle(processed);
+      // 4. 숫자 + 빈칸 합치기
+      const combined = filteredNumbers.concat(blanks);
 
-      // 5) X표시 좌석 유지하면서 좌석에 값 넣기
+      // 5. 전체 완전 셔플 (숫자와 빈칸 골고루 섞임)
+      shuffle(combined);
+
+      // 6. X표시 좌석은 유지, 나머지에 combined 값을 채우기
       let seatValues = Array(TOTAL_SEATS).fill("");
-      let valIndex = 0;
-      for (let i = 0; i < TOTAL_SEATS; i++) {
-        if (seatStates[i] !== "X" && valIndex < processed.length) {
-          seatValues[i] = processed[valIndex++];
+      let combinedIndex = 0;
+      for(let i = 0; i < TOTAL_SEATS; i++) {
+        if(seatStates[i] !== "X" && combinedIndex < combined.length) {
+          seatValues[i] = combined[combinedIndex++];
         }
       }
 
-      // 6) 남은 번호 표시
-      const leftover = processed.slice(valIndex).filter((v) => v !== "");
-      if (leftover.length > 0) {
+      // 7. 남는 번호 처리 (만약 combined에 숫자가 남았으면)
+      const leftover = combined.slice(combinedIndex).filter(v => v !== "");
+      if(leftover.length > 0) {
         unplacedBox.style.display = "block";
         unplacedBox.textContent = "배치되지 못한 번호: " + leftover.join(", ");
       }
 
-      // 7) 화면 출력
+      // 8. 화면에 좌석 출력
       const sections = [
         { el: left, count: 8 },
         { el: center, count: 10 },
@@ -172,8 +176,8 @@
       ];
 
       let seatIndex = 0;
-      sections.forEach((section) => {
-        for (let i = 0; i < section.count; i++) {
+      sections.forEach(section => {
+        for(let i=0; i < section.count; i++) {
           section.el.appendChild(createCell(seatIndex, seatValues[seatIndex]));
           seatIndex++;
         }
